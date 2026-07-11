@@ -64,14 +64,33 @@ export async function getTeamLogo(wikiTitle: string): Promise<string | null> {
   return parseInfoboxLogo(html);
 }
 
+/** Caps in-flight requests so a 22-team roster doesn't burst 22 simultaneous
+ * connections to Wikipedia (which timed out under Vercel build concurrency). */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
   const teams = await getYearTeams(year);
-  return Promise.all(
-    teams.map(async (team) => ({
-      ...team,
-      logoUrl: await getTeamLogo(team.wikiTitle),
-    })),
-  );
+  return mapWithConcurrency(teams, 4, async (team) => ({
+    ...team,
+    logoUrl: await getTeamLogo(team.wikiTitle),
+  }));
 }
 
 export async function getTeamDetail(
