@@ -45,3 +45,21 @@ export interface YearOverview {
   year: number;
   stages: StageSummary[];
 }
+
+export interface RosterRider {
+  bib: string;
+  name: string;
+  country: string | null;
+  position: string;
+}
+
+export interface TeamEntry {
+  code: string;
+  name: string;
+  wikiTitle: string;
+  riders: RosterRider[];
+}
+
+export interface TeamWithLogo extends TeamEntry {
+  logoUrl: string | null;
+}

@@ -1,7 +1,9 @@
-import { fetchWikipediaPageHtml } from "./client";
+import { fetchWikipediaEvergreenPage, fetchWikipediaPageHtml } from "./client";
 import { parseStageTable } from "./parseStages";
 import { parseStageResults } from "./parseResults";
-import type { StageDetail, StageSummary } from "./types";
+import { parseTeamsAndRiders } from "./parseTeams";
+import { parseInfoboxLogo } from "./parseTeamLogo";
+import type { StageDetail, StageSummary, TeamEntry, TeamWithLogo } from "./types";
 
 export const FIRST_YEAR = 2020;
 
@@ -47,4 +49,47 @@ export async function getStageDetail(
   return { summary, stageResults, gcResults };
 }
 
-export type { StageDetail, StageSummary, ResultRow, StageProfile } from "./types";
+export async function getYearTeams(year: number): Promise<TeamEntry[]> {
+  const html = await fetchWikipediaPageHtml(
+    `List of teams and cyclists in the ${year} Tour de France`,
+    year,
+  );
+  if (!html) return [];
+  return parseTeamsAndRiders(html);
+}
+
+export async function getTeamLogo(wikiTitle: string): Promise<string | null> {
+  const html = await fetchWikipediaEvergreenPage(wikiTitle);
+  if (!html) return null;
+  return parseInfoboxLogo(html);
+}
+
+export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
+  const teams = await getYearTeams(year);
+  return Promise.all(
+    teams.map(async (team) => ({
+      ...team,
+      logoUrl: await getTeamLogo(team.wikiTitle),
+    })),
+  );
+}
+
+export async function getTeamDetail(
+  year: number,
+  code: string,
+): Promise<TeamWithLogo | null> {
+  const teams = await getYearTeams(year);
+  const team = teams.find((t) => t.code === code);
+  if (!team) return null;
+  return { ...team, logoUrl: await getTeamLogo(team.wikiTitle) };
+}
+
+export type {
+  StageDetail,
+  StageSummary,
+  ResultRow,
+  StageProfile,
+  RosterRider,
+  TeamEntry,
+  TeamWithLogo,
+} from "./types";
