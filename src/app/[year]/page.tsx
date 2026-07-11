@@ -59,7 +59,7 @@ export default async function YearPage({
                     </p>
                     <p className="mt-1 text-sm text-white/50">
                       {stage.date} · {PROFILE_LABEL[stage.profile]}
-                      {stage.distanceText ? ` · ${stage.distanceText}` : ""}
+                      {stage.distanceKm != null ? ` · ${stage.distanceKm} km` : ""}
                     </p>
                   </div>
                   <div className="hidden shrink-0 text-right sm:block">
