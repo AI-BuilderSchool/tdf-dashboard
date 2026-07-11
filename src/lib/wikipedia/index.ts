@@ -64,8 +64,7 @@ export async function getTeamLogo(wikiTitle: string): Promise<string | null> {
   return parseInfoboxLogo(html);
 }
 
-/** Caps in-flight requests so a 22-team roster doesn't burst 22 simultaneous
- * connections to Wikipedia (which timed out under Vercel build concurrency). */
+/** Caps in-flight requests per roster so we don't open dozens of sockets at once. */
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -87,7 +86,7 @@ async function mapWithConcurrency<T, R>(
 
 export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
   const teams = await getYearTeams(year);
-  return mapWithConcurrency(teams, 3, async (team) => ({
+  return mapWithConcurrency(teams, 8, async (team) => ({
     ...team,
     logoUrl: await getTeamLogo(team.wikiTitle),
   }));

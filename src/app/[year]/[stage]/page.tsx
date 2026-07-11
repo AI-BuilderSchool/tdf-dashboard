@@ -3,8 +3,19 @@ import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { StatTile } from "@/components/StatTile";
 import { ResultTable } from "@/components/ResultTable";
-import { getAvailableYears, getStageDetail } from "@/lib/wikipedia";
+import { getAvailableYears, getStageDetail, getYearStages } from "@/lib/wikipedia";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+
+export async function generateStaticParams() {
+  const params: { year: string; stage: string }[] = [];
+  for (const year of getAvailableYears()) {
+    const stages = await getYearStages(year);
+    for (const stage of stages) {
+      params.push({ year: String(year), stage: stage.stage });
+    }
+  }
+  return params;
+}
 
 export default async function StagePage({
   params,
