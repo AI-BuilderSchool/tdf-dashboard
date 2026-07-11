@@ -27,13 +27,13 @@ export default async function YearPage({
       <Nav crumbs={[{ label: String(year) }]} />
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 py-28 text-center">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
+          <p className="text-base font-semibold tracking-tight text-accent">
             {year}
           </p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">
+          <h1 className="mt-4 text-5xl font-semibold tracking-tighter text-white sm:text-7xl">
             {year} Tour de France
           </h1>
-          <p className="mt-4 text-lg text-white/60">
+          <p className="mt-5 text-lg font-normal tracking-tight text-white/60 sm:text-xl">
             {stages.length > 0
               ? `총 ${stages.length}개 스테이지`
               : "스테이지 데이터를 불러올 수 없습니다."}
@@ -54,7 +54,7 @@ export default async function YearPage({
                     {stage.stage}
                   </div>
                   <div className="min-w-0 flex-1 text-left">
-                    <p className="truncate text-lg font-semibold text-white sm:text-xl">
+                    <p className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
                       {stage.course}
                     </p>
                     <p className="mt-1 text-sm text-white/50">

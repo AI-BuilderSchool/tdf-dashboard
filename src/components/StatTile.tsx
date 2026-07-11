@@ -12,12 +12,12 @@ export function StatTile({
   return (
     <div className="flex flex-col items-center gap-2 rounded-3xl bg-surface px-8 py-10 text-center">
       <div
-        className={`font-semibold tracking-tight text-white ${isLong ? "text-2xl sm:text-3xl" : "text-5xl sm:text-6xl"}`}
+        className={`font-semibold tracking-tighter text-white ${isLong ? "text-2xl sm:text-3xl" : "text-5xl sm:text-6xl"}`}
       >
         {value}
-        {unit && <span className="ml-1 text-2xl text-white/50">{unit}</span>}
+        {unit && <span className="ml-1 text-2xl tracking-normal text-white/50">{unit}</span>}
       </div>
-      <div className="text-sm text-white/50">{label}</div>
+      <div className="text-sm font-normal tracking-tight text-white/50">{label}</div>
     </div>
   );
 }

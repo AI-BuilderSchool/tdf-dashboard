@@ -24,7 +24,6 @@ export function ResultTable({
             <tr className="text-white/40">
               <th className="w-14 px-6 py-3 font-medium sm:px-8">#</th>
               <th className="px-3 py-3 font-medium">선수</th>
-              <th className="hidden px-3 py-3 font-medium sm:table-cell">팀</th>
               <th className="px-6 py-3 text-right font-medium sm:px-8">기록</th>
             </tr>
           </thead>
@@ -39,14 +38,11 @@ export function ResultTable({
                 </td>
                 <td className="px-3 py-3 text-white">
                   {row.rider}
-                  {row.country && (
+                  {row.team && row.team !== row.rider && (
                     <span className="ml-2 text-xs text-white/40">
-                      {row.country}
+                      {row.team}
                     </span>
                   )}
-                </td>
-                <td className="hidden px-3 py-3 text-white/60 sm:table-cell">
-                  {row.team}
                 </td>
                 <td className="px-6 py-3 text-right font-mono text-white/80 sm:px-8">
                   {row.time}

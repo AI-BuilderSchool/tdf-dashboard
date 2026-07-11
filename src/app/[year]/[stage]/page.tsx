@@ -47,13 +47,13 @@ export default async function StagePage({
         <section
           className={`flex flex-col items-center bg-gradient-to-b px-6 py-24 text-center ${PROFILE_GRADIENT[summary.profile]}`}
         >
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
+          <p className="text-base font-semibold tracking-tight text-accent">
             Stage {summary.stage} · {summary.date}
           </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
+          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tighter text-white sm:text-7xl">
             {summary.course}
           </h1>
-          <p className="mt-4 text-lg text-white/70">
+          <p className="mt-5 text-lg font-normal tracking-tight text-white/70 sm:text-xl">
             {PROFILE_LABEL[summary.profile]}
           </p>
         </section>

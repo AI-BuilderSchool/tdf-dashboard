@@ -8,13 +8,13 @@ export default function Home() {
   return (
     <main className="flex-1">
       <section className="flex min-h-[85vh] flex-col items-center justify-center px-6 text-center">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
+        <p className="text-base font-semibold tracking-tight text-accent">
           Le Grand Départ
         </p>
-        <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-7xl">
+        <h1 className="mt-4 max-w-5xl text-6xl font-semibold tracking-tighter text-white sm:text-8xl">
           Tour de France
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-white/60 sm:text-xl">
+        <p className="mt-6 max-w-xl text-xl font-normal tracking-tight text-white/60 sm:text-2xl">
           연도를 선택해 스테이지, 코스 정보, 순위를 확인하세요.
         </p>
       </section>
@@ -34,13 +34,15 @@ export default function Home() {
                     "radial-gradient(circle at 30% 20%, rgba(255,205,0,0.18), transparent 60%)",
                 }}
               />
-              <div className="relative flex h-full flex-col justify-between">
+              <div className="relative flex h-full flex-col">
                 <span className="text-xs text-white/40">
                   {i === 0 ? "최신 대회" : "대회"}
                 </span>
-                <span className="text-4xl font-semibold tracking-tight text-white transition group-hover:text-accent sm:text-5xl">
-                  {year}
-                </span>
+                <div className="flex flex-1 items-center justify-center">
+                  <span className="text-4xl font-semibold tracking-tighter text-white transition group-hover:text-accent sm:text-5xl">
+                    {year}
+                  </span>
+                </div>
               </div>
             </Link>
           ))}
