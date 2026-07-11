@@ -6,10 +6,6 @@ import { TeamCard } from "@/components/TeamCard";
 import { getAvailableYears, getYearStages, getYearTeamsWithLogos } from "@/lib/wikipedia";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
 
-export async function generateStaticParams() {
-  return getAvailableYears().map((year) => ({ year: String(year) }));
-}
-
 export default async function YearPage({
   params,
 }: {

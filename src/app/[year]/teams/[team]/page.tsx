@@ -2,22 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import {
-  getAvailableYears,
-  getTeamDetail,
-  getYearTeams,
-} from "@/lib/wikipedia";
-
-export async function generateStaticParams() {
-  const params: { year: string; team: string }[] = [];
-  for (const year of getAvailableYears()) {
-    const teams = await getYearTeams(year);
-    for (const team of teams) {
-      params.push({ year: String(year), team: team.code });
-    }
-  }
-  return params;
-}
+import { getAvailableYears, getTeamDetail } from "@/lib/wikipedia";
 
 export default async function TeamPage({
   params,
