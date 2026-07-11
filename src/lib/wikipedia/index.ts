@@ -87,7 +87,7 @@ async function mapWithConcurrency<T, R>(
 
 export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
   const teams = await getYearTeams(year);
-  return mapWithConcurrency(teams, 4, async (team) => ({
+  return mapWithConcurrency(teams, 3, async (team) => ({
     ...team,
     logoUrl: await getTeamLogo(team.wikiTitle),
   }));
