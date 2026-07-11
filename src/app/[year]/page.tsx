@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { TeamsSection, TeamsSkeleton } from "@/components/TeamsSection";
+import { TeamsSection } from "@/components/TeamsSection";
 import { getAvailableYears, getYearStages } from "@/lib/wikipedia";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+
+export async function generateStaticParams() {
+  return getAvailableYears().map((year) => ({ year: String(year) }));
+}
 
 export default async function YearPage({
   params,
@@ -38,9 +41,7 @@ export default async function YearPage({
           </p>
         </section>
 
-        <Suspense fallback={<TeamsSkeleton />}>
-          <TeamsSection year={year} />
-        </Suspense>
+        <TeamsSection year={year} />
 
         <div className="mx-auto max-w-4xl px-6 pb-32">
           <div className="flex flex-col gap-4">

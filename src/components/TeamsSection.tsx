@@ -1,6 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { TeamCard } from "@/components/TeamCard";
-import { getYearTeamsWithLogos } from "@/lib/wikipedia";
+import type { TeamWithLogo } from "@/lib/wikipedia";
 
 export function TeamsSkeleton() {
   return (
@@ -26,8 +29,28 @@ export function TeamsSkeleton() {
   );
 }
 
-export async function TeamsSection({ year }: { year: number }) {
-  const teams = await getYearTeamsWithLogos(year);
+export function TeamsSection({ year }: { year: number }) {
+  const [teams, setTeams] = useState<TeamWithLogo[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTeams(null);
+
+    fetch(`/api/teams/${year}`)
+      .then((res) => res.json())
+      .then((data: { teams: TeamWithLogo[] }) => {
+        if (!cancelled) setTeams(data.teams ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setTeams([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [year]);
+
+  if (teams === null) return <TeamsSkeleton />;
   if (teams.length === 0) return null;
 
   return (
