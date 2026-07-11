@@ -1,7 +1,15 @@
+import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 import { getAvailableYears, getYearTeamsWithLogos } from "@/lib/wikipedia";
 
-export const revalidate = 21600; // 6h — rosters/logos rarely change once a Tour starts
+// Route Handlers aren't cached by `export const revalidate` alone; unstable_cache
+// persists the result across invocations via Next's Data Cache regardless of
+// the route's static/dynamic classification.
+const getCachedYearTeams = unstable_cache(
+  (year: number) => getYearTeamsWithLogos(year),
+  ["year-teams-with-logos"],
+  { revalidate: 21600 }, // 6h — rosters/logos rarely change once a Tour starts
+);
 
 export async function GET(
   _request: Request,
@@ -14,6 +22,6 @@ export async function GET(
     return NextResponse.json({ error: "invalid year" }, { status: 404 });
   }
 
-  const teams = await getYearTeamsWithLogos(year);
+  const teams = await getCachedYearTeams(year);
   return NextResponse.json({ teams });
 }
