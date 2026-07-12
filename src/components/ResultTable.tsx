@@ -37,11 +37,9 @@ export function ResultTable({
                   {row.rank}
                 </td>
                 <td className="px-3 py-3 text-white">
-                  {row.rider}
+                  <p>{row.rider}</p>
                   {row.team && row.team !== row.rider && (
-                    <span className="ml-2 text-xs text-white/40">
-                      {row.team}
-                    </span>
+                    <p className="mt-0.5 text-xs text-white/40">{row.team}</p>
                   )}
                 </td>
                 <td className="px-6 py-3 text-right font-mono whitespace-nowrap text-white/80 sm:px-8">
