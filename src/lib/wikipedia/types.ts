@@ -63,3 +63,14 @@ export interface TeamEntry {
 export interface TeamWithLogo extends TeamEntry {
   logoUrl: string | null;
 }
+
+export type JerseyKind = "general" | "points" | "mountains" | "youth";
+
+export interface ClassificationLeader {
+  jersey: JerseyKind;
+  rider: string;
+  country: string | null;
+  team: string;
+  isFinal: boolean;
+  throughStage: string | null;
+}

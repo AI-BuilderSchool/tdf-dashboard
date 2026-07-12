@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { JerseyHighlights } from "@/components/JerseyHighlights";
 import { TeamsSection } from "@/components/TeamsSection";
+import { StageIndex } from "@/components/StageIndex";
 import { getAvailableYears, getYearStages } from "@/lib/db";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
 
@@ -43,12 +45,20 @@ export default async function YearPage({
           </p>
         </section>
 
+        <JerseyHighlights year={year} />
+
         <TeamsSection year={year} />
+
+        <StageIndex stages={stages.map((s) => s.stage)} />
 
         <div className="mx-auto max-w-4xl px-6 pb-32">
           <div className="flex flex-col gap-4">
             {stages.map((stage, i) => (
-              <AnimatedSection key={stage.stage} delay={Math.min(i * 0.03, 0.3)}>
+              <AnimatedSection
+                key={stage.stage}
+                id={`stage-${stage.stage}`}
+                delay={Math.min(i * 0.03, 0.3)}
+              >
                 <Link
                   href={`/${year}/${encodeURIComponent(stage.stage)}`}
                   className="group flex items-center gap-6 overflow-hidden rounded-3xl bg-surface p-6 transition duration-300 hover:bg-surface-2 sm:p-8"

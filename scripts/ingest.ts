@@ -9,6 +9,7 @@ import path from "node:path";
 import {
   getAvailableYears,
   getStageDetail,
+  getYearClassifications,
   getYearStages,
   getYearTeamsWithLogos,
 } from "../src/lib/wikipedia";
@@ -46,6 +47,7 @@ async function ingestYear(db: Database.Database, year: number) {
   const deleteResults = db.prepare("DELETE FROM stage_results WHERE year = ?");
   const deleteTeams = db.prepare("DELETE FROM teams WHERE year = ?");
   const deleteRoster = db.prepare("DELETE FROM roster WHERE year = ?");
+  const deleteClassifications = db.prepare("DELETE FROM classifications WHERE year = ?");
 
   const insertStage = db.prepare(`
     INSERT INTO stages (year, stage, date, course, distance_km, distance_text,
@@ -71,6 +73,11 @@ async function ingestYear(db: Database.Database, year: number) {
     VALUES (@year, @teamCode, @position, @bib, @name, @country, @finalPosition)
   `);
 
+  const insertClassification = db.prepare(`
+    INSERT INTO classifications (year, jersey, rider, country, team, is_final, through_stage)
+    VALUES (@year, @jersey, @rider, @country, @team, @isFinal, @throughStage)
+  `);
+
   const details = await mapWithConcurrency(stages, 4, async (stage) => {
     try {
       return await getStageDetail(year, stage.stage);
@@ -86,11 +93,18 @@ async function ingestYear(db: Database.Database, year: number) {
     return [];
   });
 
+  console.log(`[${year}] fetching classification leaders...`);
+  const classifications = await getYearClassifications(year).catch((err) => {
+    console.warn(`[${year}] classifications fetch failed:`, (err as Error).message);
+    return [];
+  });
+
   const tx = db.transaction(() => {
     deleteStages.run(year);
     deleteResults.run(year);
     deleteTeams.run(year);
     deleteRoster.run(year);
+    deleteClassifications.run(year);
 
     stages.forEach((stage, stageOrder) => {
       insertStage.run({
@@ -143,10 +157,23 @@ async function ingestYear(db: Database.Database, year: number) {
         });
       });
     });
+    classifications.forEach((leader) => {
+      insertClassification.run({
+        year,
+        jersey: leader.jersey,
+        rider: leader.rider,
+        country: leader.country,
+        team: leader.team,
+        isFinal: leader.isFinal ? 1 : 0,
+        throughStage: leader.throughStage,
+      });
+    });
   });
 
   tx();
-  console.log(`[${year}] done: ${stages.length} stages, ${teams.length} teams`);
+  console.log(
+    `[${year}] done: ${stages.length} stages, ${teams.length} teams, ${classifications.length} classifications`,
+  );
 }
 
 async function main() {

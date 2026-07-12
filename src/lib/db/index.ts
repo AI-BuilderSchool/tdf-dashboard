@@ -1,5 +1,7 @@
 import { getDb } from "./client";
 import type {
+  ClassificationLeader,
+  JerseyKind,
   ResultRow,
   RosterRider,
   StageDetail,
@@ -170,6 +172,34 @@ export async function getTeamDetail(
   };
 }
 
+interface ClassificationRow {
+  jersey: JerseyKind;
+  rider: string | null;
+  country: string | null;
+  team: string | null;
+  is_final: number;
+  through_stage: string | null;
+}
+
+export async function getYearClassifications(
+  year: number,
+): Promise<ClassificationLeader[]> {
+  const rows = getDb()
+    .prepare("SELECT * FROM classifications WHERE year = ?")
+    .all(year) as ClassificationRow[];
+
+  return rows
+    .filter((r) => r.rider)
+    .map((r) => ({
+      jersey: r.jersey,
+      rider: r.rider!,
+      country: r.country,
+      team: r.team ?? "",
+      isFinal: r.is_final === 1,
+      throughStage: r.through_stage,
+    }));
+}
+
 export type {
   StageDetail,
   StageSummary,
@@ -178,4 +208,6 @@ export type {
   RosterRider,
   TeamEntry,
   TeamWithLogo,
+  ClassificationLeader,
+  JerseyKind,
 } from "../wikipedia/types";

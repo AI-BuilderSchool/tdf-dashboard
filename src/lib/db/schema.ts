@@ -51,4 +51,15 @@ CREATE TABLE IF NOT EXISTS roster (
   final_position TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_roster ON roster(year, team_code);
+
+CREATE TABLE IF NOT EXISTS classifications (
+  year INTEGER NOT NULL,
+  jersey TEXT NOT NULL,
+  rider TEXT,
+  country TEXT,
+  team TEXT,
+  is_final INTEGER NOT NULL,
+  through_stage TEXT,
+  PRIMARY KEY (year, jersey)
+);
 `;

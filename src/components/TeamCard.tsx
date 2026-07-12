@@ -24,7 +24,7 @@ export function TeamCard({
             unoptimized
           />
         ) : (
-          <span className="flex h-full w-full items-center justify-center text-xs text-black/40">
+          <span className="flex h-full w-full items-center justify-center text-3xl font-bold tracking-tight text-black/50">
             {team.code}
           </span>
         )}

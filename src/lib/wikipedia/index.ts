@@ -3,7 +3,14 @@ import { parseStageTable } from "./parseStages";
 import { parseStageResults } from "./parseResults";
 import { parseTeamsAndRiders } from "./parseTeams";
 import { parseInfoboxLogo } from "./parseTeamLogo";
-import type { StageDetail, StageSummary, TeamEntry, TeamWithLogo } from "./types";
+import { parseClassificationLeaders } from "./parseClassifications";
+import type {
+  ClassificationLeader,
+  StageDetail,
+  StageSummary,
+  TeamEntry,
+  TeamWithLogo,
+} from "./types";
 
 export const FIRST_YEAR = 2020;
 
@@ -47,6 +54,14 @@ export async function getStageDetail(
     isLastStage,
   );
   return { summary, stageResults, gcResults };
+}
+
+export async function getYearClassifications(
+  year: number,
+): Promise<ClassificationLeader[]> {
+  const html = await fetchWikipediaPageHtml(`${year} Tour de France`, year);
+  if (!html) return [];
+  return parseClassificationLeaders(html);
 }
 
 export async function getYearTeams(year: number): Promise<TeamEntry[]> {
@@ -110,4 +125,6 @@ export type {
   RosterRider,
   TeamEntry,
   TeamWithLogo,
+  ClassificationLeader,
+  JerseyKind,
 } from "./types";
