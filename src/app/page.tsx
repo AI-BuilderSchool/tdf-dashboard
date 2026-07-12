@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { getAvailableYears } from "@/lib/wikipedia";
+import { getAvailableYears } from "@/lib/db";
 
 export default function Home() {
   const years = getAvailableYears();

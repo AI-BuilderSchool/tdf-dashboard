@@ -1,4 +1,4 @@
-import type { ResultRow } from "@/lib/wikipedia";
+import type { ResultRow } from "@/lib/db";
 
 export function ResultTable({
   title,

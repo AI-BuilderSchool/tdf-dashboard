@@ -3,8 +3,10 @@ import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { StatTile } from "@/components/StatTile";
 import { ResultTable } from "@/components/ResultTable";
-import { getAvailableYears, getStageDetail, getYearStages } from "@/lib/wikipedia";
+import { getAvailableYears, getStageDetail, getYearStages } from "@/lib/db";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   const params: { year: string; stage: string }[] = [];

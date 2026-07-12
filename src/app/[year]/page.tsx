@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { TeamsSection } from "@/components/TeamsSection";
-import { getAvailableYears, getYearStages } from "@/lib/wikipedia";
+import { getAvailableYears, getYearStages } from "@/lib/db";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return getAvailableYears().map((year) => ({ year: String(year) }));

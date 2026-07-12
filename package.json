@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ingest": "tsx scripts/ingest.ts"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "cheerio": "^1.2.0",
     "framer-motion": "^12.42.2",
     "next": "16.2.10",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -24,6 +27,7 @@
     "eslint-config-next": "16.2.10",
     "playwright": "^1.61.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }

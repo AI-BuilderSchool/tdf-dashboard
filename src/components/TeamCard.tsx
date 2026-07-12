@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { TeamWithLogo } from "@/lib/wikipedia";
+import type { TeamWithLogo } from "@/lib/db";
 
 export function TeamCard({
   year,

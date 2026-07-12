@@ -1,4 +1,4 @@
-import type { StageProfile } from "@/lib/wikipedia";
+import type { StageProfile } from "@/lib/db";
 
 export const PROFILE_LABEL: Record<StageProfile, string> = {
   flat: "평지",
