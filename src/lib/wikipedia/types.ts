@@ -60,10 +60,6 @@ export interface TeamEntry {
   riders: RosterRider[];
 }
 
-export interface TeamWithLogo extends TeamEntry {
-  logoUrl: string | null;
-}
-
 export type JerseyKind = "general" | "points" | "mountains" | "youth";
 
 export interface ClassificationLeader {

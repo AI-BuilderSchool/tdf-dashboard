@@ -1,15 +1,14 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { getAvailableYears, getTeamDetail, getYearTeamsWithLogos } from "@/lib/db";
+import { getAvailableYears, getTeamDetail, getYearTeams } from "@/lib/db";
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
   const params: { year: string; team: string }[] = [];
   for (const year of getAvailableYears()) {
-    const teams = await getYearTeamsWithLogos(year);
+    const teams = await getYearTeams(year);
     for (const team of teams) {
       params.push({ year: String(year), team: team.code });
     }
@@ -43,22 +42,10 @@ export default async function TeamPage({
       />
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 py-24 text-center">
-          <div className="relative h-28 w-48 overflow-hidden rounded-3xl bg-white/95 p-4">
-            {team.logoUrl ? (
-              <Image
-                src={team.logoUrl}
-                alt={team.name}
-                fill
-                className="object-contain p-2"
-                unoptimized
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-5xl font-bold tracking-tight text-black/50">
-                {team.code}
-              </span>
-            )}
-          </div>
-          <h1 className="mt-8 max-w-3xl text-4xl font-semibold tracking-tighter text-white sm:text-6xl">
+          <p className="text-base font-semibold tracking-tight text-accent">
+            {team.code}
+          </p>
+          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tighter text-white sm:text-6xl">
             {team.name}
           </h1>
           <p className="mt-4 text-lg font-normal tracking-tight text-white/60">

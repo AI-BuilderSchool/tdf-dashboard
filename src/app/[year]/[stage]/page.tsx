@@ -3,8 +3,9 @@ import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { StatTile } from "@/components/StatTile";
 import { ResultTable } from "@/components/ResultTable";
+import { StageProfileChart } from "@/components/StageProfileChart";
 import { getAvailableYears, getStageDetail, getYearStages } from "@/lib/db";
-import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+import { PROFILE_GRADIENT, PROFILE_LABEL, parseCourseEndpoints } from "@/lib/profile";
 
 export const dynamicParams = false;
 
@@ -36,6 +37,7 @@ export default async function StagePage({
   if (!detail) notFound();
 
   const { summary, stageResults, gcResults } = detail;
+  const { start, finish } = parseCourseEndpoints(summary.course);
 
   return (
     <>
@@ -79,6 +81,14 @@ export default async function StagePage({
             <StatTile value={PROFILE_LABEL[summary.profile]} label="코스 유형" />
             <StatTile value={summary.winner ?? "—"} label="스테이지 우승" />
           </div>
+        </AnimatedSection>
+
+        <AnimatedSection className="mx-auto max-w-5xl px-6 pb-16">
+          <StageProfileChart
+            profile={summary.profile}
+            startCity={start}
+            finishCity={finish}
+          />
         </AnimatedSection>
 
         <AnimatedSection className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-6 pb-32 lg:grid-cols-2">

@@ -10,6 +10,14 @@ export const PROFILE_LABEL: Record<StageProfile, string> = {
   unknown: "코스",
 };
 
+export function parseCourseEndpoints(course: string): { start: string; finish: string } {
+  const parts = course.split(" to ");
+  if (parts.length === 2) {
+    return { start: parts[0].trim(), finish: parts[1].trim() };
+  }
+  return { start: course, finish: course };
+}
+
 export const PROFILE_GRADIENT: Record<StageProfile, string> = {
   flat: "from-emerald-500/30 to-emerald-900/10",
   hilly: "from-amber-500/30 to-amber-900/10",

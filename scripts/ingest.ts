@@ -11,7 +11,7 @@ import {
   getStageDetail,
   getYearClassifications,
   getYearStages,
-  getYearTeamsWithLogos,
+  getYearTeams,
 } from "../src/lib/wikipedia";
 import { SCHEMA_SQL } from "../src/lib/db/schema";
 
@@ -64,8 +64,8 @@ async function ingestYear(db: Database.Database, year: number) {
   `);
 
   const insertTeam = db.prepare(`
-    INSERT INTO teams (year, code, name, wiki_title, logo_url, team_order)
-    VALUES (@year, @code, @name, @wikiTitle, @logoUrl, @teamOrder)
+    INSERT INTO teams (year, code, name, wiki_title, team_order)
+    VALUES (@year, @code, @name, @wikiTitle, @teamOrder)
   `);
 
   const insertRoster = db.prepare(`
@@ -87,8 +87,8 @@ async function ingestYear(db: Database.Database, year: number) {
     }
   });
 
-  console.log(`[${year}] fetching team rosters + logos...`);
-  const teams = await getYearTeamsWithLogos(year).catch((err) => {
+  console.log(`[${year}] fetching team rosters...`);
+  const teams = await getYearTeams(year).catch((err) => {
     console.warn(`[${year}] teams fetch failed:`, (err as Error).message);
     return [];
   });
@@ -142,7 +142,6 @@ async function ingestYear(db: Database.Database, year: number) {
         code: team.code,
         name: team.name,
         wikiTitle: team.wikiTitle,
-        logoUrl: team.logoUrl,
         teamOrder,
       });
       team.riders.forEach((rider, position) => {

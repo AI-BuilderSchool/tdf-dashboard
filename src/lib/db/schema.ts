@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS teams (
   code TEXT NOT NULL,
   name TEXT,
   wiki_title TEXT,
-  logo_url TEXT,
   team_order INTEGER NOT NULL,
   PRIMARY KEY (year, code)
 );

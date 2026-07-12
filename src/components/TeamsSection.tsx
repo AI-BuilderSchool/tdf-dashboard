@@ -1,9 +1,9 @@
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { TeamCard } from "@/components/TeamCard";
-import { getYearTeamsWithLogos } from "@/lib/db";
+import { getYearTeams } from "@/lib/db";
 
 export async function TeamsSection({ year }: { year: number }) {
-  const teams = await getYearTeamsWithLogos(year);
+  const teams = await getYearTeams(year);
   if (teams.length === 0) return null;
 
   return (

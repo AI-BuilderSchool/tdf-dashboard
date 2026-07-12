@@ -1,16 +1,9 @@
-import { fetchWikipediaEvergreenPage, fetchWikipediaPageHtml } from "./client";
+import { fetchWikipediaPageHtml } from "./client";
 import { parseStageTable } from "./parseStages";
 import { parseStageResults } from "./parseResults";
 import { parseTeamsAndRiders } from "./parseTeams";
-import { parseInfoboxLogo } from "./parseTeamLogo";
 import { parseClassificationLeaders } from "./parseClassifications";
-import type {
-  ClassificationLeader,
-  StageDetail,
-  StageSummary,
-  TeamEntry,
-  TeamWithLogo,
-} from "./types";
+import type { ClassificationLeader, StageDetail, StageSummary, TeamEntry } from "./types";
 
 export const FIRST_YEAR = 2020;
 
@@ -73,48 +66,12 @@ export async function getYearTeams(year: number): Promise<TeamEntry[]> {
   return parseTeamsAndRiders(html);
 }
 
-export async function getTeamLogo(wikiTitle: string): Promise<string | null> {
-  const html = await fetchWikipediaEvergreenPage(wikiTitle);
-  if (!html) return null;
-  return parseInfoboxLogo(html);
-}
-
-/** Caps in-flight requests per roster so we don't open dozens of sockets at once. */
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-
-  async function worker() {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]);
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
-
-export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
-  const teams = await getYearTeams(year);
-  return mapWithConcurrency(teams, 8, async (team) => ({
-    ...team,
-    logoUrl: await getTeamLogo(team.wikiTitle),
-  }));
-}
-
 export async function getTeamDetail(
   year: number,
   code: string,
-): Promise<TeamWithLogo | null> {
+): Promise<TeamEntry | null> {
   const teams = await getYearTeams(year);
-  const team = teams.find((t) => t.code === code);
-  if (!team) return null;
-  return { ...team, logoUrl: await getTeamLogo(team.wikiTitle) };
+  return teams.find((t) => t.code === code) ?? null;
 }
 
 export type {
@@ -124,7 +81,6 @@ export type {
   StageProfile,
   RosterRider,
   TeamEntry,
-  TeamWithLogo,
   ClassificationLeader,
   JerseyKind,
 } from "./types";

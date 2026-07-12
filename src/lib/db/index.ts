@@ -7,7 +7,7 @@ import type {
   StageDetail,
   StageProfile,
   StageSummary,
-  TeamWithLogo,
+  TeamEntry,
 } from "../wikipedia/types";
 
 export function getAvailableYears(): number[] {
@@ -110,7 +110,6 @@ interface TeamRow {
   code: string;
   name: string | null;
   wiki_title: string | null;
-  logo_url: string | null;
 }
 
 interface RosterRow {
@@ -138,7 +137,7 @@ function getRoster(
   }));
 }
 
-export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[]> {
+export async function getYearTeams(year: number): Promise<TeamEntry[]> {
   const db = getDb();
   const teamRows = db
     .prepare("SELECT * FROM teams WHERE year = ? ORDER BY team_order")
@@ -148,7 +147,6 @@ export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[
     code: row.code,
     name: row.name ?? row.code,
     wikiTitle: row.wiki_title ?? "",
-    logoUrl: row.logo_url,
     riders: getRoster(db, year, row.code),
   }));
 }
@@ -156,7 +154,7 @@ export async function getYearTeamsWithLogos(year: number): Promise<TeamWithLogo[
 export async function getTeamDetail(
   year: number,
   code: string,
-): Promise<TeamWithLogo | null> {
+): Promise<TeamEntry | null> {
   const db = getDb();
   const row = db
     .prepare("SELECT * FROM teams WHERE year = ? AND code = ?")
@@ -167,7 +165,6 @@ export async function getTeamDetail(
     code: row.code,
     name: row.name ?? row.code,
     wikiTitle: row.wiki_title ?? "",
-    logoUrl: row.logo_url,
     riders: getRoster(db, year, row.code),
   };
 }
@@ -207,7 +204,6 @@ export type {
   StageProfile,
   RosterRider,
   TeamEntry,
-  TeamWithLogo,
   ClassificationLeader,
   JerseyKind,
 } from "../wikipedia/types";
