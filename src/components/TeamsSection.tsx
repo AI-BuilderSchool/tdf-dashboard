@@ -7,7 +7,7 @@ export async function TeamsSection({ year }: { year: number }) {
   if (teams.length === 0) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-20">
+    <div id="section-teams" className="mx-auto max-w-6xl px-6 pb-20">
       <AnimatedSection className="mb-8 text-center">
         <p className="text-base font-semibold tracking-tight text-accent">Teams</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tighter text-white sm:text-4xl">

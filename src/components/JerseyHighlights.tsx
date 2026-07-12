@@ -10,7 +10,7 @@ export async function JerseyHighlights({ year }: { year: number }) {
   const isFinal = general?.isFinal ?? false;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-20">
+    <div id="section-jerseys" className="mx-auto max-w-6xl px-6 pb-20">
       {general && (
         <AnimatedSection className="mb-10 text-center">
           <p className="text-base font-semibold tracking-tight text-accent">
