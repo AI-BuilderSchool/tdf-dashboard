@@ -44,7 +44,7 @@ export function ResultTable({
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-3 text-right font-mono text-white/80 sm:px-8">
+                <td className="px-6 py-3 text-right font-mono whitespace-nowrap text-white/80 sm:px-8">
                   {row.time}
                 </td>
               </tr>
