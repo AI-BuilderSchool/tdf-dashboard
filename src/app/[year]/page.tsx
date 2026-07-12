@@ -30,6 +30,7 @@ export default async function YearPage({
   return (
     <>
       <Nav crumbs={[{ label: String(year) }]} />
+      <SectionNav />
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 py-28 text-center">
           <p className="text-base font-semibold tracking-tight text-accent">
@@ -48,8 +49,6 @@ export default async function YearPage({
         <JerseyHighlights year={year} />
 
         <TeamsSection year={year} />
-
-        <SectionNav />
 
         <div id="section-stages" className="mx-auto max-w-4xl px-6 pb-32">
           <div className="flex flex-col gap-4">
