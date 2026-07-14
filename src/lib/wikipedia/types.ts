@@ -64,6 +64,7 @@ export type JerseyKind = "general" | "points" | "mountains" | "youth";
 
 export interface ClassificationLeader {
   jersey: JerseyKind;
+  rank: number;
   rider: string;
   country: string | null;
   team: string;

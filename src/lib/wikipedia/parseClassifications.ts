@@ -8,6 +8,15 @@ const HEADING_BY_JERSEY: Record<JerseyKind, string> = {
   youth: "Young_rider_classification",
 };
 
+// General classification shows a full podium (top 3); the other jerseys just
+// need their current leader.
+const ROWS_BY_JERSEY: Record<JerseyKind, number> = {
+  general: 3,
+  points: 1,
+  mountains: 1,
+  youth: 1,
+};
+
 export function parseClassificationLeaders(html: string): ClassificationLeader[] {
   const $ = cheerio.load(html);
   const leaders: ClassificationLeader[] = [];
@@ -25,16 +34,21 @@ export function parseClassificationLeaders(html: string): ClassificationLeader[]
     const stageMatch = caption.match(/after Stage\s+(\S+)/i);
     const throughStage = stageMatch ? stageMatch[1] : null;
 
-    const firstDataRow = table.find("tbody > tr").eq(1);
-    const riderCell = firstDataRow.find("td").first();
-    const teamCell = firstDataRow.find("td").eq(1);
+    const rowCount = ROWS_BY_JERSEY[jersey];
+    for (let rank = 1; rank <= rowCount; rank++) {
+      const dataRow = table.find("tbody > tr").eq(rank);
+      if (dataRow.length === 0) break;
 
-    const rider = riderCell.find("a").first().text().trim();
-    const country = riderCell.find("abbr").first().text().trim() || null;
-    const team = teamCell.find("a").first().text().trim() || teamCell.text().trim();
+      const riderCell = dataRow.find("td").first();
+      const teamCell = dataRow.find("td").eq(1);
 
-    if (rider) {
-      leaders.push({ jersey, rider, country, team, isFinal, throughStage });
+      const rider = riderCell.find("a").first().text().trim();
+      const country = riderCell.find("abbr").first().text().trim() || null;
+      const team = teamCell.find("a").first().text().trim() || teamCell.text().trim();
+
+      if (rider) {
+        leaders.push({ jersey, rank, rider, country, team, isFinal, throughStage });
+      }
     }
   }
 

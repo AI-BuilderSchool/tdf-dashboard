@@ -171,6 +171,7 @@ export async function getTeamDetail(
 
 interface ClassificationRow {
   jersey: JerseyKind;
+  rank: number;
   rider: string | null;
   country: string | null;
   team: string | null;
@@ -182,13 +183,14 @@ export async function getYearClassifications(
   year: number,
 ): Promise<ClassificationLeader[]> {
   const rows = getDb()
-    .prepare("SELECT * FROM classifications WHERE year = ?")
+    .prepare("SELECT * FROM classifications WHERE year = ? ORDER BY jersey, rank")
     .all(year) as ClassificationRow[];
 
   return rows
     .filter((r) => r.rider)
     .map((r) => ({
       jersey: r.jersey,
+      rank: r.rank,
       rider: r.rider!,
       country: r.country,
       team: r.team ?? "",

@@ -74,8 +74,8 @@ async function ingestYear(db: Database.Database, year: number) {
   `);
 
   const insertClassification = db.prepare(`
-    INSERT INTO classifications (year, jersey, rider, country, team, is_final, through_stage)
-    VALUES (@year, @jersey, @rider, @country, @team, @isFinal, @throughStage)
+    INSERT INTO classifications (year, jersey, rank, rider, country, team, is_final, through_stage)
+    VALUES (@year, @jersey, @rank, @rider, @country, @team, @isFinal, @throughStage)
   `);
 
   const details = await mapWithConcurrency(stages, 4, async (stage) => {
@@ -160,6 +160,7 @@ async function ingestYear(db: Database.Database, year: number) {
       insertClassification.run({
         year,
         jersey: leader.jersey,
+        rank: leader.rank,
         rider: leader.rider,
         country: leader.country,
         team: leader.team,
