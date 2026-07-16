@@ -74,7 +74,13 @@ export function parseStageTable(html: string): StageSummary[] {
       const iconAlt = $(tds[iconIdx]).find("img").attr("alt") ?? "";
       const typeText = $(tds[typeIdx]).text().trim();
       const winnerCell = $(tds[winnerIdx]);
-      const winnerLink = winnerCell.find("a").first();
+      // For team time trial stages the winner is a team, and its flag (unlike
+      // the plain-image flag used for individual riders) is itself a link —
+      // skip to the first <a> that actually has text.
+      const winnerLink = winnerCell
+        .find("a")
+        .filter((_, el) => $(el).text().trim().length > 0)
+        .first();
       const winnerText = winnerLink.text().trim() || null;
       const countryMatch = winnerCell.text().match(/\(([A-Z]{3})\)/);
 
