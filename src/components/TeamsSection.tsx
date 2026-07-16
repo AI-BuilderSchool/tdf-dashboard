@@ -1,9 +1,16 @@
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { TeamCard } from "@/components/TeamCard";
 import { getYearTeams } from "@/lib/db";
+import type { RaceSlug } from "@/lib/races";
 
-export async function TeamsSection({ year }: { year: number }) {
-  const teams = await getYearTeams(year);
+export async function TeamsSection({
+  race,
+  year,
+}: {
+  race: RaceSlug;
+  year: number;
+}) {
+  const teams = await getYearTeams(race, year);
   if (teams.length === 0) return null;
 
   return (
@@ -17,7 +24,7 @@ export async function TeamsSection({ year }: { year: number }) {
       </AnimatedSection>
       <AnimatedSection className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {teams.map((team) => (
-          <TeamCard key={team.code} year={year} team={team} />
+          <TeamCard key={team.code} race={race} year={year} team={team} />
         ))}
       </AnimatedSection>
     </div>

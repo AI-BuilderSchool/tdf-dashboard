@@ -1,4 +1,5 @@
 import { getDb } from "./client";
+import type { RaceSlug } from "@/lib/races";
 import type {
   ClassificationLeader,
   JerseyKind,
@@ -10,10 +11,10 @@ import type {
   TeamEntry,
 } from "../wikipedia/types";
 
-export function getAvailableYears(): number[] {
+export function getAvailableYears(race: RaceSlug): number[] {
   const rows = getDb()
-    .prepare("SELECT DISTINCT year FROM stages ORDER BY year DESC")
-    .all() as { year: number }[];
+    .prepare("SELECT DISTINCT year FROM stages WHERE race = ? ORDER BY year DESC")
+    .all(race) as { year: number }[];
   return rows.map((r) => r.year);
 }
 
@@ -53,10 +54,13 @@ function rowToStageSummary(row: StageRow): StageSummary {
   };
 }
 
-export async function getYearStages(year: number): Promise<StageSummary[]> {
+export async function getYearStages(
+  race: RaceSlug,
+  year: number,
+): Promise<StageSummary[]> {
   const rows = getDb()
-    .prepare("SELECT * FROM stages WHERE year = ? ORDER BY stage_order")
-    .all(year) as StageRow[];
+    .prepare("SELECT * FROM stages WHERE race = ? AND year = ? ORDER BY stage_order")
+    .all(race, year) as StageRow[];
   return rows.map(rowToStageSummary);
 }
 
@@ -79,25 +83,26 @@ function rowToResultRow(row: ResultRowRaw): ResultRow {
 }
 
 export async function getStageDetail(
+  race: RaceSlug,
   year: number,
   stageId: string,
 ): Promise<StageDetail | null> {
   const db = getDb();
   const stageRow = db
-    .prepare("SELECT * FROM stages WHERE year = ? AND stage = ?")
-    .get(year, stageId) as StageRow | undefined;
+    .prepare("SELECT * FROM stages WHERE race = ? AND year = ? AND stage = ?")
+    .get(race, year, stageId) as StageRow | undefined;
   if (!stageRow) return null;
 
   const stageResults = db
     .prepare(
-      "SELECT rank, rider, country, team, time FROM stage_results WHERE year = ? AND stage = ? AND kind = 'stage' ORDER BY position",
+      "SELECT rank, rider, country, team, time FROM stage_results WHERE race = ? AND year = ? AND stage = ? AND kind = 'stage' ORDER BY position",
     )
-    .all(year, stageId) as ResultRowRaw[];
+    .all(race, year, stageId) as ResultRowRaw[];
   const gcResults = db
     .prepare(
-      "SELECT rank, rider, country, team, time FROM stage_results WHERE year = ? AND stage = ? AND kind = 'gc' ORDER BY position",
+      "SELECT rank, rider, country, team, time FROM stage_results WHERE race = ? AND year = ? AND stage = ? AND kind = 'gc' ORDER BY position",
     )
-    .all(year, stageId) as ResultRowRaw[];
+    .all(race, year, stageId) as ResultRowRaw[];
 
   return {
     summary: rowToStageSummary(stageRow),
@@ -121,14 +126,15 @@ interface RosterRow {
 
 function getRoster(
   db: ReturnType<typeof getDb>,
+  race: RaceSlug,
   year: number,
   code: string,
 ): RosterRider[] {
   const rows = db
     .prepare(
-      "SELECT bib, name, country, final_position FROM roster WHERE year = ? AND team_code = ? ORDER BY position",
+      "SELECT bib, name, country, final_position FROM roster WHERE race = ? AND year = ? AND team_code = ? ORDER BY position",
     )
-    .all(year, code) as RosterRow[];
+    .all(race, year, code) as RosterRow[];
   return rows.map((r) => ({
     bib: r.bib ?? "",
     name: r.name ?? "",
@@ -137,35 +143,39 @@ function getRoster(
   }));
 }
 
-export async function getYearTeams(year: number): Promise<TeamEntry[]> {
+export async function getYearTeams(
+  race: RaceSlug,
+  year: number,
+): Promise<TeamEntry[]> {
   const db = getDb();
   const teamRows = db
-    .prepare("SELECT * FROM teams WHERE year = ? ORDER BY team_order")
-    .all(year) as TeamRow[];
+    .prepare("SELECT * FROM teams WHERE race = ? AND year = ? ORDER BY team_order")
+    .all(race, year) as TeamRow[];
 
   return teamRows.map((row) => ({
     code: row.code,
     name: row.name ?? row.code,
     wikiTitle: row.wiki_title ?? "",
-    riders: getRoster(db, year, row.code),
+    riders: getRoster(db, race, year, row.code),
   }));
 }
 
 export async function getTeamDetail(
+  race: RaceSlug,
   year: number,
   code: string,
 ): Promise<TeamEntry | null> {
   const db = getDb();
   const row = db
-    .prepare("SELECT * FROM teams WHERE year = ? AND code = ?")
-    .get(year, code) as TeamRow | undefined;
+    .prepare("SELECT * FROM teams WHERE race = ? AND year = ? AND code = ?")
+    .get(race, year, code) as TeamRow | undefined;
   if (!row) return null;
 
   return {
     code: row.code,
     name: row.name ?? row.code,
     wikiTitle: row.wiki_title ?? "",
-    riders: getRoster(db, year, row.code),
+    riders: getRoster(db, race, year, row.code),
   };
 }
 
@@ -180,11 +190,14 @@ interface ClassificationRow {
 }
 
 export async function getYearClassifications(
+  race: RaceSlug,
   year: number,
 ): Promise<ClassificationLeader[]> {
   const rows = getDb()
-    .prepare("SELECT * FROM classifications WHERE year = ? ORDER BY jersey, rank")
-    .all(year) as ClassificationRow[];
+    .prepare(
+      "SELECT * FROM classifications WHERE race = ? AND year = ? ORDER BY jersey, rank",
+    )
+    .all(race, year) as ClassificationRow[];
 
   return rows
     .filter((r) => r.rider)
@@ -221,15 +234,18 @@ interface StageWinRow {
   profile: string;
 }
 
-export async function getYearStageHunters(year: number): Promise<StageHunters> {
+export async function getYearStageHunters(
+  race: RaceSlug,
+  year: number,
+): Promise<StageHunters> {
   const rows = getDb()
     .prepare(
       `SELECT sr.rider, sr.team, s.profile
        FROM stage_results sr
-       JOIN stages s ON s.year = sr.year AND s.stage = sr.stage
-       WHERE sr.year = ? AND sr.kind = 'stage' AND sr.position = 0`,
+       JOIN stages s ON s.race = sr.race AND s.year = sr.year AND s.stage = sr.stage
+       WHERE sr.race = ? AND sr.year = ? AND sr.kind = 'stage' AND sr.position = 0`,
     )
-    .all(year) as StageWinRow[];
+    .all(race, year) as StageWinRow[];
 
   const riderWins = new Map<string, { team: string; wins: number }>();
   const teamWins = new Map<string, number>();
@@ -275,3 +291,4 @@ export type {
   ClassificationLeader,
   JerseyKind,
 } from "../wikipedia/types";
+export type { RaceSlug, RaceMeta, JerseyStyle } from "@/lib/races";

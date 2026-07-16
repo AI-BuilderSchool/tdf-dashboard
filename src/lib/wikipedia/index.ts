@@ -3,28 +3,31 @@ import { parseStageTable } from "./parseStages";
 import { parseStageResults } from "./parseResults";
 import { parseTeamsAndRiders } from "./parseTeams";
 import { parseClassificationLeaders } from "./parseClassifications";
+import { RACES, type RaceSlug } from "@/lib/races";
 import type { ClassificationLeader, StageDetail, StageSummary, TeamEntry } from "./types";
 
-export const FIRST_YEAR = 2020;
-
-export function getAvailableYears(): number[] {
+export function getAvailableYears(race: RaceSlug): number[] {
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
-  for (let y = currentYear; y >= FIRST_YEAR; y--) years.push(y);
+  for (let y = currentYear; y >= RACES[race].firstYear; y--) years.push(y);
   return years;
 }
 
-export async function getYearStages(year: number): Promise<StageSummary[]> {
-  const html = await fetchWikipediaPageHtml(`${year} Tour de France`, year);
+export async function getYearStages(
+  race: RaceSlug,
+  year: number,
+): Promise<StageSummary[]> {
+  const html = await fetchWikipediaPageHtml(`${year} ${RACES[race].wikiName}`, year);
   if (!html) return [];
   return parseStageTable(html);
 }
 
 export async function getStageDetail(
+  race: RaceSlug,
   year: number,
   stageId: string,
 ): Promise<StageDetail | null> {
-  const stages = await getYearStages(year);
+  const stages = await getYearStages(race, year);
   const summary = stages.find((s) => s.stage === stageId);
   if (!summary) return null;
 
@@ -50,16 +53,20 @@ export async function getStageDetail(
 }
 
 export async function getYearClassifications(
+  race: RaceSlug,
   year: number,
 ): Promise<ClassificationLeader[]> {
-  const html = await fetchWikipediaPageHtml(`${year} Tour de France`, year);
+  const html = await fetchWikipediaPageHtml(`${year} ${RACES[race].wikiName}`, year);
   if (!html) return [];
   return parseClassificationLeaders(html);
 }
 
-export async function getYearTeams(year: number): Promise<TeamEntry[]> {
+export async function getYearTeams(
+  race: RaceSlug,
+  year: number,
+): Promise<TeamEntry[]> {
   const html = await fetchWikipediaPageHtml(
-    `List of teams and cyclists in the ${year} Tour de France`,
+    `List of teams and cyclists in the ${year} ${RACES[race].wikiName}`,
     year,
   );
   if (!html) return [];
@@ -67,10 +74,11 @@ export async function getYearTeams(year: number): Promise<TeamEntry[]> {
 }
 
 export async function getTeamDetail(
+  race: RaceSlug,
   year: number,
   code: string,
 ): Promise<TeamEntry | null> {
-  const teams = await getYearTeams(year);
+  const teams = await getYearTeams(race, year);
   return teams.find((t) => t.code === code) ?? null;
 }
 

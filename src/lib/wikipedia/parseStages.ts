@@ -20,9 +20,11 @@ function inferProfile(typeText: string, iconAlt: string): StageProfile {
 }
 
 /**
- * Parses the "Stage characteristics" table from a Tour de France year article.
- * Column layout varies by year (some editions omit "Elevation gain"), so columns
- * are resolved by counting <td>s per row rather than a fixed index.
+ * Parses the "Stage characteristics" table from a grand tour year article.
+ * Column layout varies by race/year — some editions omit "Elevation gain",
+ * some (Giro/Vuelta) add a trailing "Ref" column — so columns are resolved
+ * by matching header <th> labels (expanded for colspan) rather than a fixed
+ * index or a raw <td> count.
  */
 export function parseStageTable(html: string): StageSummary[] {
   const $ = cheerio.load(html);
@@ -36,6 +38,33 @@ export function parseStageTable(html: string): StageSummary[] {
 
   if (table.length === 0) return [];
 
+  // Build a label per physical <td> column (skipping the leading "Stage" <th>),
+  // expanding any colspan so the list lines up 1:1 with each row's <td>s.
+  const headerRow = table.find("tr").first();
+  const columns: string[] = [];
+  headerRow
+    .find("th")
+    .slice(1)
+    .each((_, th) => {
+      const $th = $(th);
+      const label = $th.text().trim();
+      const span = parseInt($th.attr("colspan") ?? "1", 10) || 1;
+      for (let i = 0; i < span; i++) columns.push(label);
+    });
+
+  // Header text can carry a trailing footnote marker (e.g. "Elevation gain[10]"),
+  // so match by prefix rather than exact equality.
+  const findColumn = (label: string) => columns.findIndex((c) => c.startsWith(label));
+  const dateIdx = findColumn("Date");
+  const courseIdx = findColumn("Course");
+  const distanceIdx = findColumn("Distance");
+  const elevationIdx = findColumn("Elevation gain");
+  const typeIndices = columns.reduce<number[]>((acc, label, i) => {
+    if (label.startsWith("Type")) acc.push(i);
+    return acc;
+  }, []);
+  const winnerIdx = findColumn("Winner");
+
   const stages: StageSummary[] = [];
 
   table
@@ -45,7 +74,9 @@ export function parseStageTable(html: string): StageSummary[] {
       const $row = $(row);
       const stageHeader = $row.find("th").first();
       const stage = stageHeader.text().trim();
-      if (!stage) return;
+      // Skip rest-day rows (blank stage cell) and the trailing "Total" summary
+      // row some editions add; real stage labels are like "1" or "11a".
+      if (!/^\d+[a-z]?$/i.test(stage)) return;
 
       const link = stageHeader.find("a").first();
       const href = link.attr("href") ?? "";
@@ -59,20 +90,22 @@ export function parseStageTable(html: string): StageSummary[] {
           : null;
 
       const tds = $row.find("td");
-      const n = tds.length;
-      if (n < 6) return;
+      if (tds.length === 0 || winnerIdx < 0) return;
 
-      const hasElevation = n === 7;
-      const date = $(tds[0]).text().trim();
-      const course = $(tds[1]).text().trim().replace(/\s+/g, " ");
-      const distanceText = $(tds[2]).text().trim() || null;
-      const elevationGainText = hasElevation ? $(tds[3]).text().trim() || null : null;
-      const iconIdx = hasElevation ? 4 : 3;
-      const typeIdx = hasElevation ? 5 : 4;
-      const winnerIdx = n - 1;
+      const date = dateIdx >= 0 ? $(tds[dateIdx]).text().trim() : "";
+      const course =
+        courseIdx >= 0 ? $(tds[courseIdx]).text().trim().replace(/\s+/g, " ") : "";
+      const distanceText =
+        distanceIdx >= 0 ? $(tds[distanceIdx]).text().trim() || null : null;
+      const elevationGainText =
+        elevationIdx >= 0 ? $(tds[elevationIdx]).text().trim() || null : null;
 
-      const iconAlt = $(tds[iconIdx]).find("img").attr("alt") ?? "";
-      const typeText = $(tds[typeIdx]).text().trim();
+      // Of the two "Type" columns, the icon cell has an <img>; the other has text.
+      const iconIdx = typeIndices.find((i) => $(tds[i]).find("img").length > 0);
+      const typeTextIdx = typeIndices.find((i) => i !== iconIdx);
+      const iconAlt = iconIdx !== undefined ? $(tds[iconIdx]).find("img").attr("alt") ?? "" : "";
+      const typeText = typeTextIdx !== undefined ? $(tds[typeTextIdx]).text().trim() : "";
+
       const winnerCell = $(tds[winnerIdx]);
       // For team time trial stages the winner is a team, and its flag (unlike
       // the plain-image flag used for individual riders) is itself a link —

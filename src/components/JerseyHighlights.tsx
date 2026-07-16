@@ -1,13 +1,22 @@
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { getYearClassifications, getYearStageHunters } from "@/lib/db";
-import { JERSEY_META, JERSEY_ORDER, PODIUM_RANK_STYLE } from "@/lib/jersey";
+import { JERSEY_ORDER, PODIUM_RANK_STYLE } from "@/lib/jersey";
+import { RACES, type RaceSlug } from "@/lib/races";
 
-export async function JerseyHighlights({ year }: { year: number }) {
+export async function JerseyHighlights({
+  race,
+  year,
+}: {
+  race: RaceSlug;
+  year: number;
+}) {
   const [leaders, hunters] = await Promise.all([
-    getYearClassifications(year),
-    getYearStageHunters(year),
+    getYearClassifications(race, year),
+    getYearStageHunters(race, year),
   ]);
   if (leaders.length === 0) return null;
+
+  const jerseys = RACES[race].jerseys;
 
   const podium = leaders
     .filter((l) => l.jersey === "general")
@@ -38,7 +47,7 @@ export async function JerseyHighlights({ year }: { year: number }) {
             {podium.map((p) => (
               <div
                 key={p.rank}
-                className="flex flex-col items-center gap-3 rounded-3xl bg-gradient-to-b from-yellow-400/20 to-yellow-600/5 p-6 text-center"
+                className={`flex flex-col items-center gap-3 rounded-3xl bg-gradient-to-b p-6 text-center ${jerseys.general.gradient}`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${PODIUM_RANK_STYLE[p.rank]}`}
@@ -60,7 +69,7 @@ export async function JerseyHighlights({ year }: { year: number }) {
       <AnimatedSection className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {JERSEY_ORDER.map((jersey) => {
           const jerseyLeader = leaders.find((l) => l.jersey === jersey);
-          const meta = JERSEY_META[jersey];
+          const meta = jerseys[jersey];
           if (!jerseyLeader) return null;
 
           return (

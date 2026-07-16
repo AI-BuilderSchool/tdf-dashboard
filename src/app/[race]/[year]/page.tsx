@@ -7,29 +7,40 @@ import { TeamsSection } from "@/components/TeamsSection";
 import { SectionNav } from "@/components/SectionNav";
 import { getAvailableYears, getYearStages } from "@/lib/db";
 import { PROFILE_GRADIENT, PROFILE_LABEL } from "@/lib/profile";
+import { RACES, RACE_ORDER, isRaceSlug, type RaceSlug } from "@/lib/races";
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  return getAvailableYears().map((year) => ({ year: String(year) }));
+  return RACE_ORDER.flatMap((race) =>
+    getAvailableYears(race).map((year) => ({ race, year: String(year) })),
+  );
 }
 
 export default async function YearPage({
   params,
 }: {
-  params: Promise<{ year: string }>;
+  params: Promise<{ race: string; year: string }>;
 }) {
-  const { year: yearParam } = await params;
+  const { race: raceParam, year: yearParam } = await params;
+  if (!isRaceSlug(raceParam)) notFound();
+  const race: RaceSlug = raceParam;
   const year = Number(yearParam);
-  if (!Number.isInteger(year) || !getAvailableYears().includes(year)) {
+  if (!Number.isInteger(year) || !getAvailableYears(race).includes(year)) {
     notFound();
   }
 
-  const stages = await getYearStages(year);
+  const meta = RACES[race];
+  const stages = await getYearStages(race, year);
 
   return (
     <>
-      <Nav crumbs={[{ label: String(year) }]} />
+      <Nav
+        crumbs={[
+          { label: meta.name, href: `/${race}` },
+          { label: String(year) },
+        ]}
+      />
       <SectionNav />
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 py-28 text-center">
@@ -37,7 +48,7 @@ export default async function YearPage({
             {year}
           </p>
           <h1 className="mt-4 text-5xl font-semibold tracking-tighter text-white sm:text-7xl">
-            {year} Tour de France
+            {year} {meta.name}
           </h1>
           <p className="mt-5 text-lg font-normal tracking-tight text-white/60 sm:text-xl">
             {stages.length > 0
@@ -46,16 +57,16 @@ export default async function YearPage({
           </p>
         </section>
 
-        <JerseyHighlights year={year} />
+        <JerseyHighlights race={race} year={year} />
 
-        <TeamsSection year={year} />
+        <TeamsSection race={race} year={year} />
 
         <div id="section-stages" className="mx-auto max-w-4xl px-6 pb-32">
           <div className="flex flex-col gap-4">
             {stages.map((stage, i) => (
               <AnimatedSection key={stage.stage} delay={Math.min(i * 0.03, 0.3)}>
                 <Link
-                  href={`/${year}/${encodeURIComponent(stage.stage)}`}
+                  href={`/${race}/${year}/${encodeURIComponent(stage.stage)}`}
                   className="group flex items-center gap-6 overflow-hidden rounded-3xl bg-surface p-6 transition duration-300 hover:bg-surface-2 sm:p-8"
                 >
                   <div

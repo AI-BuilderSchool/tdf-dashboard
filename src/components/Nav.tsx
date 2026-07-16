@@ -9,7 +9,7 @@ export function Nav({
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-4 text-sm">
         <Link href="/" className="font-semibold tracking-tight text-white">
-          Tour de France
+          Grand Tours
         </Link>
         {crumbs.map((c) => (
           <span key={c.label} className="flex items-center gap-2 text-white/50">

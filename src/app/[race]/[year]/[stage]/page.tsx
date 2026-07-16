@@ -6,15 +6,18 @@ import { ResultTable } from "@/components/ResultTable";
 import { StageProfileChart } from "@/components/StageProfileChart";
 import { getAvailableYears, getStageDetail, getYearStages } from "@/lib/db";
 import { PROFILE_GRADIENT, PROFILE_LABEL, parseCourseEndpoints } from "@/lib/profile";
+import { RACES, RACE_ORDER, isRaceSlug, type RaceSlug } from "@/lib/races";
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const params: { year: string; stage: string }[] = [];
-  for (const year of getAvailableYears()) {
-    const stages = await getYearStages(year);
-    for (const stage of stages) {
-      params.push({ year: String(year), stage: stage.stage });
+  const params: { race: string; year: string; stage: string }[] = [];
+  for (const race of RACE_ORDER) {
+    for (const year of getAvailableYears(race)) {
+      const stages = await getYearStages(race, year);
+      for (const stage of stages) {
+        params.push({ race, year: String(year), stage: stage.stage });
+      }
     }
   }
   return params;
@@ -23,19 +26,22 @@ export async function generateStaticParams() {
 export default async function StagePage({
   params,
 }: {
-  params: Promise<{ year: string; stage: string }>;
+  params: Promise<{ race: string; year: string; stage: string }>;
 }) {
-  const { year: yearParam, stage: stageParam } = await params;
+  const { race: raceParam, year: yearParam, stage: stageParam } = await params;
+  if (!isRaceSlug(raceParam)) notFound();
+  const race: RaceSlug = raceParam;
   const year = Number(yearParam);
   const stageId = decodeURIComponent(stageParam);
 
-  if (!Number.isInteger(year) || !getAvailableYears().includes(year)) {
+  if (!Number.isInteger(year) || !getAvailableYears(race).includes(year)) {
     notFound();
   }
 
-  const detail = await getStageDetail(year, stageId);
+  const detail = await getStageDetail(race, year, stageId);
   if (!detail) notFound();
 
+  const meta = RACES[race];
   const { summary, stageResults, gcResults } = detail;
   const { start, finish } = parseCourseEndpoints(summary.course);
 
@@ -43,7 +49,8 @@ export default async function StagePage({
     <>
       <Nav
         crumbs={[
-          { label: String(year), href: `/${year}` },
+          { label: meta.name, href: `/${race}` },
+          { label: String(year), href: `/${race}/${year}` },
           { label: `Stage ${summary.stage}` },
         ]}
       />

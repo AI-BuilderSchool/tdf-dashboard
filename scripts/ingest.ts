@@ -1,8 +1,10 @@
 /**
  * One-off / periodic data refresh: scrapes Wikipedia via the same parsing
- * logic the app used to call live, and writes the result into
- * data/tdf.db. Run with `npm run ingest` (optionally `-- --year 2026` to
- * refresh a single year) whenever the current Tour's data needs updating.
+ * logic the app used to call live, and writes the result into data/tdf.db.
+ *
+ *   npm run ingest                                    # every race, every year
+ *   npm run ingest -- --race tour-de-france            # one race, every year
+ *   npm run ingest -- --race tour-de-france --year 2026 # one race + year (use for the in-progress Tour)
  */
 import Database from "better-sqlite3";
 import path from "node:path";
@@ -14,6 +16,7 @@ import {
   getYearTeams,
 } from "../src/lib/wikipedia";
 import { SCHEMA_SQL } from "../src/lib/db/schema";
+import { RACE_ORDER, type RaceSlug } from "../src/lib/races";
 
 const DB_PATH = path.join(process.cwd(), "data", "tdf.db");
 
@@ -34,80 +37,86 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-async function ingestYear(db: Database.Database, year: number) {
-  console.log(`\n[${year}] fetching stage list...`);
-  const stages = await getYearStages(year);
+async function ingestRaceYear(db: Database.Database, race: RaceSlug, year: number) {
+  const tag = `${race} ${year}`;
+  console.log(`\n[${tag}] fetching stage list...`);
+  const stages = await getYearStages(race, year);
   if (stages.length === 0) {
-    console.warn(`[${year}] no stages found, skipping`);
+    console.warn(`[${tag}] no stages found, skipping`);
     return;
   }
-  console.log(`[${year}] ${stages.length} stages`);
+  console.log(`[${tag}] ${stages.length} stages`);
 
-  const deleteStages = db.prepare("DELETE FROM stages WHERE year = ?");
-  const deleteResults = db.prepare("DELETE FROM stage_results WHERE year = ?");
-  const deleteTeams = db.prepare("DELETE FROM teams WHERE year = ?");
-  const deleteRoster = db.prepare("DELETE FROM roster WHERE year = ?");
-  const deleteClassifications = db.prepare("DELETE FROM classifications WHERE year = ?");
+  const deleteStages = db.prepare("DELETE FROM stages WHERE race = ? AND year = ?");
+  const deleteResults = db.prepare(
+    "DELETE FROM stage_results WHERE race = ? AND year = ?",
+  );
+  const deleteTeams = db.prepare("DELETE FROM teams WHERE race = ? AND year = ?");
+  const deleteRoster = db.prepare("DELETE FROM roster WHERE race = ? AND year = ?");
+  const deleteClassifications = db.prepare(
+    "DELETE FROM classifications WHERE race = ? AND year = ?",
+  );
 
   const insertStage = db.prepare(`
-    INSERT INTO stages (year, stage, date, course, distance_km, distance_text,
+    INSERT INTO stages (race, year, stage, date, course, distance_km, distance_text,
       elevation_gain_m, elevation_gain_text, type_text, profile, winner,
       winner_country, result_sub_article, result_anchor, stage_order)
-    VALUES (@year, @stage, @date, @course, @distanceKm, @distanceText,
+    VALUES (@race, @year, @stage, @date, @course, @distanceKm, @distanceText,
       @elevationGainM, @elevationGainText, @typeText, @profile, @winner,
       @winnerCountry, @resultSubArticle, @resultAnchor, @stageOrder)
   `);
 
   const insertResult = db.prepare(`
-    INSERT INTO stage_results (year, stage, kind, position, rank, rider, country, team, time)
-    VALUES (@year, @stage, @kind, @position, @rank, @rider, @country, @team, @time)
+    INSERT INTO stage_results (race, year, stage, kind, position, rank, rider, country, team, time)
+    VALUES (@race, @year, @stage, @kind, @position, @rank, @rider, @country, @team, @time)
   `);
 
   const insertTeam = db.prepare(`
-    INSERT INTO teams (year, code, name, wiki_title, team_order)
-    VALUES (@year, @code, @name, @wikiTitle, @teamOrder)
+    INSERT INTO teams (race, year, code, name, wiki_title, team_order)
+    VALUES (@race, @year, @code, @name, @wikiTitle, @teamOrder)
   `);
 
   const insertRoster = db.prepare(`
-    INSERT INTO roster (year, team_code, position, bib, name, country, final_position)
-    VALUES (@year, @teamCode, @position, @bib, @name, @country, @finalPosition)
+    INSERT INTO roster (race, year, team_code, position, bib, name, country, final_position)
+    VALUES (@race, @year, @teamCode, @position, @bib, @name, @country, @finalPosition)
   `);
 
   const insertClassification = db.prepare(`
-    INSERT INTO classifications (year, jersey, rank, rider, country, team, is_final, through_stage)
-    VALUES (@year, @jersey, @rank, @rider, @country, @team, @isFinal, @throughStage)
+    INSERT INTO classifications (race, year, jersey, rank, rider, country, team, is_final, through_stage)
+    VALUES (@race, @year, @jersey, @rank, @rider, @country, @team, @isFinal, @throughStage)
   `);
 
   const details = await mapWithConcurrency(stages, 4, async (stage) => {
     try {
-      return await getStageDetail(year, stage.stage);
+      return await getStageDetail(race, year, stage.stage);
     } catch (err) {
-      console.warn(`[${year}] stage ${stage.stage} failed:`, (err as Error).message);
+      console.warn(`[${tag}] stage ${stage.stage} failed:`, (err as Error).message);
       return null;
     }
   });
 
-  console.log(`[${year}] fetching team rosters...`);
-  const teams = await getYearTeams(year).catch((err) => {
-    console.warn(`[${year}] teams fetch failed:`, (err as Error).message);
+  console.log(`[${tag}] fetching team rosters...`);
+  const teams = await getYearTeams(race, year).catch((err) => {
+    console.warn(`[${tag}] teams fetch failed:`, (err as Error).message);
     return [];
   });
 
-  console.log(`[${year}] fetching classification leaders...`);
-  const classifications = await getYearClassifications(year).catch((err) => {
-    console.warn(`[${year}] classifications fetch failed:`, (err as Error).message);
+  console.log(`[${tag}] fetching classification leaders...`);
+  const classifications = await getYearClassifications(race, year).catch((err) => {
+    console.warn(`[${tag}] classifications fetch failed:`, (err as Error).message);
     return [];
   });
 
   const tx = db.transaction(() => {
-    deleteStages.run(year);
-    deleteResults.run(year);
-    deleteTeams.run(year);
-    deleteRoster.run(year);
-    deleteClassifications.run(year);
+    deleteStages.run(race, year);
+    deleteResults.run(race, year);
+    deleteTeams.run(race, year);
+    deleteRoster.run(race, year);
+    deleteClassifications.run(race, year);
 
     stages.forEach((stage, stageOrder) => {
       insertStage.run({
+        race,
         year,
         stage: stage.stage,
         date: stage.date,
@@ -129,15 +138,30 @@ async function ingestYear(db: Database.Database, year: number) {
       if (!detail) return;
 
       detail.stageResults.forEach((row, position) => {
-        insertResult.run({ year, stage: stage.stage, kind: "stage", position, ...row });
+        insertResult.run({
+          race,
+          year,
+          stage: stage.stage,
+          kind: "stage",
+          position,
+          ...row,
+        });
       });
       detail.gcResults.forEach((row, position) => {
-        insertResult.run({ year, stage: stage.stage, kind: "gc", position, ...row });
+        insertResult.run({
+          race,
+          year,
+          stage: stage.stage,
+          kind: "gc",
+          position,
+          ...row,
+        });
       });
     });
 
     teams.forEach((team, teamOrder) => {
       insertTeam.run({
+        race,
         year,
         code: team.code,
         name: team.name,
@@ -146,6 +170,7 @@ async function ingestYear(db: Database.Database, year: number) {
       });
       team.riders.forEach((rider, position) => {
         insertRoster.run({
+          race,
           year,
           teamCode: team.code,
           position,
@@ -158,6 +183,7 @@ async function ingestYear(db: Database.Database, year: number) {
     });
     classifications.forEach((leader) => {
       insertClassification.run({
+        race,
         year,
         jersey: leader.jersey,
         rank: leader.rank,
@@ -172,20 +198,25 @@ async function ingestYear(db: Database.Database, year: number) {
 
   tx();
   console.log(
-    `[${year}] done: ${stages.length} stages, ${teams.length} teams, ${classifications.length} classifications`,
+    `[${tag}] done: ${stages.length} stages, ${teams.length} teams, ${classifications.length} classifications`,
   );
 }
 
 async function main() {
+  const raceArgIdx = process.argv.indexOf("--race");
+  const onlyRace = raceArgIdx >= 0 ? (process.argv[raceArgIdx + 1] as RaceSlug) : null;
   const yearArgIdx = process.argv.indexOf("--year");
   const onlyYear = yearArgIdx >= 0 ? Number(process.argv[yearArgIdx + 1]) : null;
 
   const db = new Database(DB_PATH);
   db.exec(SCHEMA_SQL);
 
-  const years = onlyYear ? [onlyYear] : getAvailableYears();
-  for (const year of years) {
-    await ingestYear(db, year);
+  const races = onlyRace ? [onlyRace] : RACE_ORDER;
+  for (const race of races) {
+    const years = onlyYear ? [onlyYear] : getAvailableYears(race);
+    for (const year of years) {
+      await ingestRaceYear(db, race, year);
+    }
   }
 
   db.close();

@@ -2,15 +2,18 @@ import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { getAvailableYears, getTeamDetail, getYearTeams } from "@/lib/db";
+import { RACES, RACE_ORDER, isRaceSlug, type RaceSlug } from "@/lib/races";
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const params: { year: string; team: string }[] = [];
-  for (const year of getAvailableYears()) {
-    const teams = await getYearTeams(year);
-    for (const team of teams) {
-      params.push({ year: String(year), team: team.code });
+  const params: { race: string; year: string; team: string }[] = [];
+  for (const race of RACE_ORDER) {
+    for (const year of getAvailableYears(race)) {
+      const teams = await getYearTeams(race, year);
+      for (const team of teams) {
+        params.push({ race, year: String(year), team: team.code });
+      }
     }
   }
   return params;
@@ -19,24 +22,29 @@ export async function generateStaticParams() {
 export default async function TeamPage({
   params,
 }: {
-  params: Promise<{ year: string; team: string }>;
+  params: Promise<{ race: string; year: string; team: string }>;
 }) {
-  const { year: yearParam, team: teamParam } = await params;
+  const { race: raceParam, year: yearParam, team: teamParam } = await params;
+  if (!isRaceSlug(raceParam)) notFound();
+  const race: RaceSlug = raceParam;
   const year = Number(yearParam);
   const code = decodeURIComponent(teamParam);
 
-  if (!Number.isInteger(year) || !getAvailableYears().includes(year)) {
+  if (!Number.isInteger(year) || !getAvailableYears(race).includes(year)) {
     notFound();
   }
 
-  const team = await getTeamDetail(year, code);
+  const team = await getTeamDetail(race, year, code);
   if (!team) notFound();
+
+  const meta = RACES[race];
 
   return (
     <>
       <Nav
         crumbs={[
-          { label: String(year), href: `/${year}` },
+          { label: meta.name, href: `/${race}` },
+          { label: String(year), href: `/${race}/${year}` },
           { label: team.name },
         ]}
       />
