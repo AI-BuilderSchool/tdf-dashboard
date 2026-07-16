@@ -199,6 +199,72 @@ export async function getYearClassifications(
     }));
 }
 
+export interface StageWinnerRider {
+  name: string;
+  team: string;
+  wins: number;
+}
+
+export interface StageWinnerTeam {
+  team: string;
+  wins: number;
+}
+
+export interface StageHunters {
+  riders: StageWinnerRider[];
+  teams: StageWinnerTeam[];
+}
+
+interface StageWinRow {
+  rider: string | null;
+  team: string | null;
+  profile: string;
+}
+
+export async function getYearStageHunters(year: number): Promise<StageHunters> {
+  const rows = getDb()
+    .prepare(
+      `SELECT sr.rider, sr.team, s.profile
+       FROM stage_results sr
+       JOIN stages s ON s.year = sr.year AND s.stage = sr.stage
+       WHERE sr.year = ? AND sr.kind = 'stage' AND sr.position = 0`,
+    )
+    .all(year) as StageWinRow[];
+
+  const riderWins = new Map<string, { team: string; wins: number }>();
+  const teamWins = new Map<string, number>();
+
+  for (const row of rows) {
+    // Team time trial results store the winning team's name in `rider`
+    // (there's no individual winner), so count it as a team win only.
+    const isTeamStage = row.profile === "ttt";
+    const teamName = isTeamStage ? row.rider : row.team;
+    if (teamName) {
+      teamWins.set(teamName, (teamWins.get(teamName) ?? 0) + 1);
+    }
+    if (!isTeamStage && row.rider) {
+      const existing = riderWins.get(row.rider);
+      riderWins.set(row.rider, {
+        team: row.team ?? "",
+        wins: (existing?.wins ?? 0) + 1,
+      });
+    }
+  }
+
+  const maxRiderWins = Math.max(0, ...[...riderWins.values()].map((r) => r.wins));
+  const maxTeamWins = Math.max(0, ...teamWins.values());
+
+  const riders = [...riderWins.entries()]
+    .filter(([, v]) => v.wins === maxRiderWins && maxRiderWins > 0)
+    .map(([name, v]) => ({ name, team: v.team, wins: v.wins }));
+
+  const teams = [...teamWins.entries()]
+    .filter(([, wins]) => wins === maxTeamWins && maxTeamWins > 0)
+    .map(([team, wins]) => ({ team, wins }));
+
+  return { riders, teams };
+}
+
 export type {
   StageDetail,
   StageSummary,
